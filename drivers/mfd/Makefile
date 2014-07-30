@@ -156,3 +156,6 @@ obj-$(CONFIG_MFD_PM8XXX_BATT_ALARM) 	+= pm8xxx-batt-alarm.o
 obj-$(CONFIG_MFD_ANATOP)	+= anatop-mfd.o
 obj-$(CONFIG_MFD_MAX77819) += max77819.o
 obj-$(CONFIG_MFD_TPS65132)	+= tps65132.o
+
+# Fix build for GCC 4.7
+EXTRA_CFLAGS += -Wno-array-bounds
