@@ -12,14 +12,10 @@
 /* the display off process end */
 #define LCD_EVENT_OFF_END		0x04
 
-struct lcd_event {
-	void *data;
-};
-
 #ifdef CONFIG_FB_MSM_MDSS
 int lcd_register_client(struct notifier_block *nb);
 int lcd_unregister_client(struct notifier_block *nb);
-int lcd_notifier_call_chain(unsigned long val, void *v);
+int lcd_notifier_call_chain(unsigned long val);
 #else
 static int inline lcd_register_client(struct notifier_block *nb)
 {
@@ -29,7 +25,7 @@ static int inline lcd_unregister_client(struct notifier_block *nb)
 {
 	return -ENOENT;
 }
-static int inline lcd_notifier_call_chain(unsigned long val, void *v)
+static int inline lcd_notifier_call_chain(unsigned long val)
 {
 	return -ENOENT;
 }

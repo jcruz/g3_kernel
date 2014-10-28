@@ -45,8 +45,8 @@ EXPORT_SYMBOL(lcd_unregister_client);
  *	@v: pointer passed unmodified to notifier function
  *
  */
-int lcd_notifier_call_chain(unsigned long val, void *v)
+int lcd_notifier_call_chain(unsigned long val)
 {
-	return blocking_notifier_call_chain(&lcd_notifier_list, val, v);
+	return blocking_notifier_call_chain(&lcd_notifier_list, val, NULL);
 }
 EXPORT_SYMBOL_GPL(lcd_notifier_call_chain);
