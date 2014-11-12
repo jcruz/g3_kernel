@@ -134,7 +134,7 @@ static int __init init_cpufreq_transition_notifier_list(void)
 pure_initcall(init_cpufreq_transition_notifier_list);
 
 static int off __read_mostly;
-int cpufreq_disabled(void)
+static int cpufreq_disabled(void)
 {
 	return off;
 }
@@ -358,10 +358,6 @@ void cpufreq_notify_utilization(struct cpufreq_policy *policy,
 {
 	if (policy)
 		policy->util = util;
-
-	if (policy->util >= MIN_CPU_UTIL_NOTIFY)
-		sysfs_notify(&policy->kobj, NULL, "cpu_utilization");
-
 }
 
 /*********************************************************************
@@ -1071,8 +1067,17 @@ static int cpufreq_add_dev(struct device *dev, struct subsys_interface *sif)
 		pr_debug("initialization failed\n");
 		goto err_unlock_policy;
 	}
+
+	/*
+	 * affected cpus must always be the one, which are online. We aren't
+	 * managing offline cpus here.
+	 */
+	cpumask_and(policy->cpus, policy->cpus, cpu_online_mask);
+
 	policy->user_policy.min = policy->min;
 	policy->user_policy.max = policy->max;
+
+	policy->util = 0;
 
 	blocking_notifier_call_chain(&cpufreq_policy_notifier_list,
 				     CPUFREQ_START, policy);
@@ -1692,8 +1697,12 @@ int __cpufreq_driver_target(struct cpufreq_policy *policy,
 		init_freq_table();
 	}
 #endif
-	pr_debug("target for CPU %u: %u kHz, relation %u \n", policy->cpu,
-		target_freq, relation );
+	pr_debug("target for CPU %u: %u kHz, relation %u\n", policy->cpu,
+		target_freq, relation);
+
+	if (target_freq == policy->cur)
+		return 0;
+
 #if defined(CONFIG_LGE_LOW_BATT_LIMIT)
 	if(policy->max == target_freq && soc <= LOW_BATT_LIMIT_THRESHOLD
 		&& !out_low_battery_limit) {
@@ -1743,12 +1752,14 @@ int __cpufreq_driver_getavg(struct cpufreq_policy *policy, unsigned int cpu)
 {
 	int ret = 0;
 
+	if (!(cpu_online(cpu) && cpufreq_driver->getavg))
+		return 0;
+
 	policy = cpufreq_cpu_get(policy->cpu);
 	if (!policy)
 		return -EINVAL;
 
-	if (cpu_online(cpu) && cpufreq_driver->getavg)
-		ret = cpufreq_driver->getavg(policy, cpu);
+	ret = cpufreq_driver->getavg(policy, cpu);
 
 	cpufreq_cpu_put(policy);
 	return ret;
