@@ -57,3 +57,8 @@ config FB_MSM_MDSS_KCAL_CTRL
 	---help---
 	  Enable sysfs for post-processing control of mdss-mdp5 display
 	  controllers in MDSS.
+
+config LCD_NOTIFY
+	depends on FB_MSM_MDSS
+	bool "Enable LCD Notifier Helper"
+	default y
