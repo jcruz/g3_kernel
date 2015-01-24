@@ -1601,7 +1601,7 @@ static int mmc_blk_err_check(struct mmc_card *card,
 
 	/* if general error occurs, retry the write operation. */
 	if (gen_err) {
-		pr_warn("%s: retrying write for general error\n",
+		pr_warning("%s: retrying write for general error\n",
 				req->rq_disk->disk_name);
 		return MMC_BLK_RETRY;
 	}
@@ -3101,6 +3101,11 @@ force_ro_fail:
 
 	return ret;
 }
+
+#define CID_MANFID_SANDISK	0x2
+#define CID_MANFID_TOSHIBA	0x11
+#define CID_MANFID_MICRON	0x13
+#define CID_MANFID_SAMSUNG	0x15
 
 static const struct mmc_fixup blk_fixups[] =
 {
