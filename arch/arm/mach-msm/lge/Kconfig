@@ -129,6 +129,12 @@ config MACH_MSM8974_G3_GLOBAL_COM
 	help
 	  Support for the Qualcomm MSM8974 G3 GLOBAL device.
 
+config MACH_MSM8974_G3_GLOBAL_COM_LOWMEM
+	depends on MACH_MSM8974_G3_GLOBAL_COM
+	bool "MSM8974 G3 GLOBAL COM LOWMEM"
+	help
+	  Support for the Qualcomm MSM8974 G3 GLOBAL LOWMEM device.
+
 config MACH_MSM8974_G3_CA
 	depends on ARCH_MSM8974
 	select MACH_LGE

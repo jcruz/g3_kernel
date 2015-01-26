@@ -2289,6 +2289,11 @@ config KEXEC_HARDBOOT
 	  kernel capable of performing a hardboot kexec.  It is _not_ required by a
 	  kexec'd kernel.
 
+config KEXEC_HARDBOOT_PAGE_ADDR
+	hex
+	default "0x7D800000" if MACH_LGE && MACH_MSM8974_G3_GLOBAL_COM_LOWMEM
+	default "0xDD800000" if MACH_LGE
+
 config CRASH_DUMP
 	bool "Build kdump crash kernel (EXPERIMENTAL)"
 	depends on EXPERIMENTAL
