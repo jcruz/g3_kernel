@@ -275,6 +275,26 @@ module_param_named(core_limit_temp_degC, msm_thermal_info.core_limit_temp_degC,
 module_param_named(core_control_mask, msm_thermal_info.core_control_mask,
 			uint, 0664);
 
+/* extended module parameters */
+module_param_named(temp_hysteresis_degC, msm_thermal_info.temp_hysteresis_degC,
+                        int, 0664);
+module_param_named(freq_step, msm_thermal_info.bootup_freq_step,
+			uint, 0644);
+module_param_named(core_temp_hysteresis_degC, msm_thermal_info.core_temp_hysteresis_degC,
+                        int, 0664);
+module_param_named(hotplug_temp, msm_thermal_info.hotplug_temp_degC,
+			uint, 0644);
+module_param_named(thermal_limit_high, limit_idx_high,
+			int, 0664);
+module_param_named(thermal_limit_low, limit_idx_low,
+			int, 0664);
+module_param_named(hotplug_temp_hysteresis, msm_thermal_info.hotplug_temp_hysteresis_degC,
+			uint, 0644);
+module_param_named(psm_temp, msm_thermal_info.psm_temp_degC,
+			uint, 0644);
+module_param_named(psm_temp_hysteresis, msm_thermal_info.psm_temp_hyst_degC,
+			uint, 0644);
+
 static int  msm_thermal_cpufreq_callback(struct notifier_block *nfb,
 		unsigned long event, void *data)
 {
