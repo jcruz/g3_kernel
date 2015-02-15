@@ -71,7 +71,7 @@ static int psm_rails_cnt;
 static int ocr_rail_cnt;
 static int limit_idx;
 static int limit_idx_low = 8;
-static int limit_idx_high;
+static int limit_idx_high = 20;
 static int max_tsens_num;
 static struct cpufreq_frequency_table *table;
 static uint32_t usefreq;
