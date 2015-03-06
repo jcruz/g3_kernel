@@ -102,7 +102,7 @@ static void __msm_limit_suspend(struct power_suspend *handler)
 static void __msm_limit_suspend(void)
 #endif
 {
-	if (!limit.limiter_enabled)
+	if (!limit.limiter_enabled || limit.suspended)
 		return;
 
 	INIT_DELAYED_WORK(&limit.suspend_work, msm_limit_suspend);
