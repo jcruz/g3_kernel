@@ -116,7 +116,7 @@ static int check_down_lock(unsigned int cpu)
 
 extern unsigned int get_rq_info(void);
 
-unsigned int state = MSM_MPDEC_DISABLED;
+unsigned int bricked_state = MSM_MPDEC_DISABLED;
 
 static int get_slowest_cpu(void) {
 	unsigned int cpu, slow_cpu = 0, rate, slow_rate = 0;
@@ -213,8 +213,8 @@ static void __ref bricked_hotplug_work(struct work_struct *work) {
 	if (!mutex_trylock(&hotplug.bricked_cpu_mutex))
 		goto out;
 
-	state = mp_decision();
-	switch (state) {
+	bricked_state = mp_decision();
+	switch (bricked_state) {
 	case MSM_MPDEC_DISABLED:
 	case MSM_MPDEC_IDLE:
 		break;
@@ -237,7 +237,7 @@ static void __ref bricked_hotplug_work(struct work_struct *work) {
 		break;
 	default:
 		pr_err(MPDEC_TAG": %s: invalid mpdec hotplug state %d\n",
-			__func__, state);
+			__func__, bricked_state);
 	}
 	mutex_unlock(&hotplug.bricked_cpu_mutex);
 
@@ -688,11 +688,11 @@ static ssize_t store_bricked_enabled(struct device *dev,
 	hotplug.bricked_enabled = input;
 
 	if (!hotplug.bricked_enabled) {
-		state = MSM_MPDEC_DISABLED;
+		bricked_state = MSM_MPDEC_DISABLED;
 		bricked_hotplug_stop();
 		pr_info(MPDEC_TAG": Disabled\n");
 	} else {
-		state = MSM_MPDEC_IDLE;
+		bricked_state = MSM_MPDEC_IDLE;
 		bricked_hotplug_start();
 		pr_info(MPDEC_TAG": Enabled\n");
 	}
