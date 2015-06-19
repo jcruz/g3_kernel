@@ -2260,51 +2260,6 @@ static void pp_read_igc_lut_cached(struct mdp_igc_lut_data *cfg)
 	}
 }
 
-#ifdef CONFIG_MACH_LGE
-int mdss_dsi_panel_invert(u32 enable)
-{
-	int i;
-	int disp_num = 0;
-	struct mdss_mdp_ctl *ctl;
-	struct mdss_mdp_ctl *ctl_d = NULL;
-	struct mdss_data_type *mdata;
-	struct mdp_igc_lut_data *igc_data;
-
-	mdata = mdss_mdp_get_mdata();
-	for (i = 0; i < mdata->nctl; i++) {
-		ctl = mdata->ctl_off + i;
-		if ((ctl->power_on) && (ctl->mfd) &&
-			(ctl->mfd->index == 0)) {
-			ctl_d = ctl;
-			break;
-		}
-	}
-
-	igc_data = &mdss_pp_res->igc_disp_cfg[disp_num];
-	igc_data->c0_c1_data = &mdss_pp_res->igc_lut_c0c1[disp_num][0];
-	igc_data->c2_data = &mdss_pp_res->igc_lut_c2[disp_num][0];
-	igc_data->block = MDP_LOGICAL_BLOCK_DISP_0;
-	igc_data->len = 256;
-
-	if (ctl_d && enable) {
-		igc_data->ops = MDP_PP_OPS_WRITE | MDP_PP_OPS_ENABLE;
-		for (i = 0; i < 256 ; i++) {
-			igc_c0_c1[i] = (igc_Table_RGB[i]&0xFFF)|((igc_Table_RGB[i]&0xFFF))<<16;
-			igc_c2[i] = igc_Table_RGB[i];
-		}
-		igc_data->c0_c1_data = &igc_c0_c1[0];
-		igc_data->c2_data = &igc_c2[0];
-	} else if (ctl_d && !enable) {
-		igc_data->ops = MDP_PP_OPS_WRITE | MDP_PP_OPS_DISABLE;
-	} else {
-		pr_info("!!!!!!!!!!!!!!!!! null !!!!!!!!!!!!\n");
-	}
-	mdss_pp_res->pp_disp_flags[disp_num] |= PP_FLAGS_DIRTY_IGC;
-
-	return 0;
-}
-#endif
-
 static void pp_read_igc_lut(struct mdp_igc_lut_data *cfg,
 				char __iomem *addr, u32 blk_idx)
 {
