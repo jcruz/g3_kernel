@@ -144,6 +144,10 @@ void get_dt_cn_prop_str(const char *name, char *value)
 	printk(KERN_ERR "The %s node have not property value\n", name);
 }
 
+#ifdef CONFIG_KEXEC_HARDBOOT
+#include <linux/memblock.h>
+#endif
+
 #ifdef CONFIG_ANDROID_RAM_CONSOLE
 static struct ram_console_platform_data ram_console_pdata = {
 	.bootinfo = "UTS_VERSION\n",
@@ -207,6 +211,27 @@ void __init lge_add_persist_ram_devices(void)
 
 void __init lge_reserve(void)
 {
+#ifdef CONFIG_KEXEC_HARDBOOT
+	// Reserve space for hardboot page - just after ram_console,
+	// at the start of second memory bank
+	int ret;
+	phys_addr_t start;
+	struct membank* bank;
+
+ if (meminfo.nr_banks < 3) {
+		pr_err("%s: not enough membank\n", __func__);
+		return;
+	}
+
+	bank = &meminfo.bank[2];
+	start = bank->start + bank->size - LGE_PERSISTENT_RAM_SIZE - SZ_1M;
+	ret = memblock_remove(start, SZ_1M);
+	if(!ret)
+		pr_info("Hardboot page reserved at 0x%X\n", start);
+	else
+		pr_err("Failed to reserve space for hardboot page at 0x%X!\n", start);
+#endif
+
 #if defined(CONFIG_ANDROID_PERSISTENT_RAM)
 	lge_add_persist_ram_devices();
 #endif
