@@ -28,16 +28,21 @@
 #include <linux/input/sweep2wake.h>
 #include <linux/slab.h>
 #include <linux/workqueue.h>
+#ifdef CONFIG_POWERSUSPEND
+#include <linux/powersuspend.h>
+#else
 #include <linux/lcd_notify.h>
+#endif
 #include <linux/input.h>
-
-/* uncomment since no touchscreen defines android touch, do that here */
-//#define ANDROID_TOUCH_DECLARED
 
 /* Version, author, desc, etc */
 #define DRIVER_AUTHOR "Dennis Rassmann <showp1984@gmail.com>"
 #define DRIVER_DESCRIPTION "Sweep2wake for almost any device"
-#define DRIVER_VERSION "1.5"
+/* Credits:
+ * v1.5 Modded for G3 by 777jon
+ * v1.6 Switch to POWERSUSPEND instead of LCD_NOTIFY + cleanups
+ */
+#define DRIVER_VERSION "1.6"
 #define LOGTAG "[sweep2wake]: "
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
@@ -73,7 +78,7 @@ static bool touch_x_called = false, touch_y_called = false;
 static bool scr_suspended = false, exec_count = true;
 static bool scr_on_touch = false, barrier[2] = {false, false};
 static bool r_barrier[2] = {false, false};
-#ifndef CONFIG_HAS_EARLYSUSPEND
+#ifndef CONFIG_POWERSUSPEND
 static struct notifier_block s2w_lcd_notif;
 #endif
 static struct input_dev * sweep2wake_pwrdev;
@@ -361,7 +366,20 @@ static struct input_handler s2w_input_handler = {
 	.id_table	= s2w_ids,
 };
 
-#ifndef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
+static void s2w_power_suspend(struct power_suspend *h) {
+	scr_suspended = true;
+}
+
+static void s2w_power_resume(struct power_suspend *h) {
+	scr_suspended = false;
+}
+
+static struct power_suspend s2w_power_suspend_handler = {
+	.suspend = s2w_power_suspend,
+	.resume = s2w_power_resume,
+};
+#else
 static int lcd_notifier_callback(struct notifier_block *this,
 				unsigned long event, void *data)
 {
@@ -378,20 +396,6 @@ static int lcd_notifier_callback(struct notifier_block *this,
 
 	return 0;
 }
-#else
-static void s2w_early_suspend(struct early_suspend *h) {
-	scr_suspended = true;
-}
-
-static void s2w_late_resume(struct early_suspend *h) {
-	scr_suspended = false;
-}
-
-static struct early_suspend s2w_early_suspend_handler = {
-	.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN,
-	.suspend = s2w_early_suspend,
-	.resume = s2w_late_resume,
-};
 #endif
 
 /*
@@ -442,15 +446,8 @@ static DEVICE_ATTR(sweep2wake_version, (S_IWUSR|S_IRUGO),
 /*
  * INIT / EXIT stuff below here
  */
-#ifdef ANDROID_TOUCH_DECLARED
-extern struct kobject *android_touch_kobj;
-#else
 struct kobject *android_touch_kobj;
 EXPORT_SYMBOL_GPL(android_touch_kobj);
-#ifdef CONFIG_TOUCHSCREEN_DOUBLETAP2WAKE
-#define DT2W_ANDROID_TOUCH_DECLARED
-#endif
-#endif
 static int __init sweep2wake_init(void)
 {
 	int rc = 0;
@@ -481,21 +478,19 @@ static int __init sweep2wake_init(void)
 	if (rc)
 		pr_err("%s: Failed to register s2w_input_handler\n", __func__);
 
-#ifndef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
+	register_power_suspend(&s2w_power_suspend_handler);
+#else
 	s2w_lcd_notif.notifier_call = lcd_notifier_callback;
 	if (lcd_register_client(&s2w_lcd_notif) != 0) {
 		pr_err("%s: Failed to register lcd callback\n", __func__);
 	}
-#else
-	register_early_suspend(&s2w_early_suspend_handler);
 #endif
 
-#ifndef ANDROID_TOUCH_DECLARED
 	android_touch_kobj = kobject_create_and_add("android_touch", NULL) ;
 	if (android_touch_kobj == NULL) {
 		pr_warn("%s: android_touch_kobj create_and_add failed\n", __func__);
 	}
-#endif
 	rc = sysfs_create_file(android_touch_kobj, &dev_attr_sweep2wake.attr);
 	if (rc) {
 		pr_warn("%s: sysfs_create_file failed for sweep2wake\n", __func__);
@@ -515,10 +510,10 @@ err_alloc_dev:
 
 static void __exit sweep2wake_exit(void)
 {
-#ifndef ANDROID_TOUCH_DECLARED
 	kobject_del(android_touch_kobj);
-#endif
-#ifndef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
+	unregister_power_suspend(&s2w_power_suspend_handler);
+#else
 	lcd_unregister_client(&s2w_lcd_notif);
 #endif
 	input_unregister_handler(&s2w_input_handler);
