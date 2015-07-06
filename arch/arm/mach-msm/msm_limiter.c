@@ -19,7 +19,7 @@
 #include <linux/cpufreq.h>
 #ifdef CONFIG_POWERSUSPEND
 #include <linux/powersuspend.h>
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 #include <linux/lcd_notify.h>
 #endif
 
@@ -132,7 +132,7 @@ static void msm_limit_resume(struct work_struct *work)
 
 #ifdef CONFIG_POWERSUSPEND
 static void __msm_limit_suspend(struct power_suspend *handler)
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 static void __msm_limit_suspend(void)
 #endif
 {
@@ -146,7 +146,7 @@ static void __msm_limit_suspend(void)
 
 #ifdef CONFIG_POWERSUSPEND
 static void __msm_limit_resume(struct power_suspend *handler)
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 static void __msm_limit_resume(void)
 #endif
 {
@@ -163,7 +163,7 @@ static struct power_suspend msm_limit_power_suspend_driver = {
 	.suspend = __msm_limit_suspend,
 	.resume = __msm_limit_resume,
 };
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 static int lcd_notifier_callback(struct notifier_block *nb,
                                  unsigned long event, void *data)
 {
@@ -201,7 +201,7 @@ static int msm_cpufreq_limit_start(void)
 
 #ifdef CONFIG_POWERSUSPEND
 	register_power_suspend(&msm_limit_power_suspend_driver);
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 	limit.notif.notifier_call = lcd_notifier_callback;
 	ret = lcd_register_client(&limit.notif);
 	if (ret != 0) {
@@ -245,7 +245,7 @@ static void msm_cpufreq_limit_stop(void)
 
 #ifdef CONFIG_POWERSUSPEND
 	unregister_power_suspend(&msm_limit_power_suspend_driver);
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 	lcd_unregister_client(&limit.notif);
 	limit.notif.notifier_call = NULL;
 #endif

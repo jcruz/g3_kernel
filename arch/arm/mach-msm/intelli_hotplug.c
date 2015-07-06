@@ -20,7 +20,7 @@
 #include <linux/kobject.h>
 #ifdef CONFIG_POWERSUSPEND
 #include <linux/powersuspend.h>
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 #include <linux/lcd_notify.h>
 #endif
 #include <linux/cpufreq.h>
@@ -372,7 +372,7 @@ static void __ref intelli_plug_resume(struct work_struct *work)
 
 #ifdef CONFIG_POWERSUSPEND
 static void __intelli_plug_suspend(struct power_suspend *handler)
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 static void __intelli_plug_suspend(void)
 #endif
 {
@@ -383,7 +383,7 @@ static void __intelli_plug_suspend(void)
 
 #ifdef CONFIG_POWERSUSPEND
 static void __intelli_plug_resume(struct power_suspend *handler)
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 static void __intelli_plug_resume(void)
 #endif
 {
@@ -397,7 +397,7 @@ static struct power_suspend intelli_plug_power_suspend_driver = {
 	.suspend = __intelli_plug_suspend,
 	.resume = __intelli_plug_resume,
 };
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 static int lcd_notifier_callback(struct notifier_block *this,
 				unsigned long event, void *data)
 {
@@ -541,7 +541,7 @@ static int __ref intelli_plug_start(void)
 
 #ifdef CONFIG_POWERSUSPEND
 	register_power_suspend(&intelli_plug_power_suspend_driver);
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 	notif.notifier_call = lcd_notifier_callback;
         if (lcd_register_client(&notif) != 0) {
                 pr_err("%s: Failed to register LCD notifier callback\n",
@@ -612,7 +612,7 @@ static void intelli_plug_stop(void)
 	mutex_destroy(&intelli_plug_mutex);
 #ifdef CONFIG_POWERSUSPEND
 	unregister_power_suspend(&intelli_plug_power_suspend_driver);
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 	lcd_unregister_client(&notif);
 	notif.notifier_call = NULL;
 #endif

@@ -25,7 +25,7 @@
 #include <linux/device.h>
 #ifdef CONFIG_POWERSUSPEND
 #include <linux/powersuspend.h>
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 #include <linux/lcd_notify.h>
 #endif
 
@@ -344,7 +344,7 @@ static struct power_suspend bricked_hotplug_power_suspend_driver = {
 	.suspend = __bricked_hotplug_suspend,
 	.resume = __bricked_hotplug_resume,
 };
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 static int lcd_notifier_callback(struct notifier_block *this,
 				unsigned long event, void *data) {
 
@@ -399,7 +399,7 @@ static int bricked_hotplug_start(void)
 
 #ifdef CONFIG_POWERSUSPEND
 	register_power_suspend(&bricked_hotplug_power_suspend_driver);
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 	notif.notifier_call = lcd_notifier_callback;
 	if (lcd_register_client(&notif) != 0) {
 		pr_err("%s: Failed to register lcd callback\n", __func__);
@@ -454,7 +454,7 @@ static void bricked_hotplug_stop(void)
 	mutex_destroy(&hotplug.bricked_cpu_mutex);
 #ifdef CONFIG_POWERSUSPEND
 	unregister_power_suspend(&bricked_hotplug_power_suspend_driver);
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 	lcd_unregister_client(&notif);
 #endif
 	destroy_workqueue(susp_wq);

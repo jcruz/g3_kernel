@@ -22,7 +22,7 @@
 #include <linux/cpufreq.h>
 #ifdef CONFIG_POWERSUSPEND
 #include <linux/powersuspend.h>
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 #include <linux/lcd_notify.h>
 #endif
 #include <linux/mutex.h>
@@ -558,7 +558,7 @@ static void __ref msm_hotplug_resume(struct work_struct *work)
 
 #ifdef CONFIG_POWERSUSPEND
 static void __msm_hotplug_suspend(struct power_suspend *handler)
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 static void __msm_hotplug_suspend(void)
 #endif
 {
@@ -569,7 +569,7 @@ static void __msm_hotplug_suspend(void)
 
 #ifdef CONFIG_POWERSUSPEND
 static void __msm_hotplug_resume(struct power_suspend *handler)
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 static void __msm_hotplug_resume(void)
 #endif
 {
@@ -583,7 +583,7 @@ static struct power_suspend msm_hotplug_power_suspend_driver = {
 	.suspend = __msm_hotplug_suspend,
 	.resume = __msm_hotplug_resume,
 };
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 static int lcd_notifier_callback(struct notifier_block *this,
 				unsigned long event, void *data)
 {
@@ -726,7 +726,7 @@ static int __ref msm_hotplug_start(void)
 
 #ifdef CONFIG_POWERSUSPEND
 	register_power_suspend(&msm_hotplug_power_suspend_driver);
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 	hotplug.notif.notifier_call = lcd_notifier_callback;
         if (lcd_register_client(&hotplug.notif) != 0) {
                 pr_err("%s: Failed to register LCD notifier callback\n",
@@ -811,7 +811,7 @@ static void msm_hotplug_stop(void)
 
 #ifdef CONFIG_POWERSUSPEND
 	unregister_power_suspend(&msm_hotplug_power_suspend_driver);
-#elif defined(CONFIG_LCD_NOTIFY)
+#else
 	lcd_unregister_client(&hotplug.notif);
 	hotplug.notif.notifier_call = NULL;
 #endif
