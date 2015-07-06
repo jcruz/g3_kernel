@@ -174,8 +174,8 @@ static struct dbs_tuners {
 	.freq_down_step_barrier = DEF_FREQ_DOWN_STEP_BARRIER,
 };
 
-static inline cputime64_t get_cpu_iowait_time(unsigned int cpu,
-						cputime64_t *wall)
+static inline u64 get_cpu_iowait_time(unsigned int cpu,
+						u64 *wall)
 {
 	u64 iowait_time = get_cpu_iowait_time_us(cpu, wall);
 
@@ -947,7 +947,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 
 	/* per cpu load calculation */
 	for_each_cpu(j, policy->cpus) {
-		cputime64_t cur_wall_time, cur_idle_time, cur_iowait_time;
+		u64 cur_wall_time, cur_idle_time, cur_iowait_time;
 		unsigned int idle_time, wall_time, iowait_time;
 		unsigned int cur_load;
 
