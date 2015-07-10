@@ -68,13 +68,6 @@
 		ti,wl_chg_full_gpio = <&pm8941_gpios 36 0x0>;
 	};
 
-	qcom,msm-thermal {
-		qcom,limit-temp = <80>;
-		qcom,temp-hysteresis = <5>;
-		qcom,core-limit-temp = <90>;
-		qcom,core-temp-hysteresis = <5>;
-	};
-
 	pm8941,lge_boost_gpio {
 		compatible = "pm8941,lge_boost_gpio";
 		label = "PM8941 GPIO 21 for Boost IC";
