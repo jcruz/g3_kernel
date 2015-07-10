@@ -155,6 +155,12 @@ config CPU_FREQ_DEFAULT_GOV_IMPULSE
 	help
 	  Use the CPUFreq governor 'interactive' as default.
 
+config CPU_FREQ_DEFAULT_GOV_LIONHEART
+	bool "lionheart"
+	select CPU_FREQ_GOV_LIONHEART
+	help
+	  Use the CPUFreq governor 'lionheart' as default.
+
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
@@ -313,6 +319,13 @@ config CPU_FREQ_GOV_INTELLIACTIVE
 
 	  For details, take a look at linux/Documentation/cpu-freq.
 
+	  If in doubt, say N.
+
+config CPU_FREQ_GOV_LIONHEART
+	tristate "'lionheart' cpufreq governor"
+	depends on CPU_FREQ
+	help
+	  'lionheart' - A brave and agile conservative-based governor.
 	  If in doubt, say N.
 
 menu "x86 CPU frequency scaling drivers"
