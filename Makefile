@@ -245,14 +245,10 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 	  else if [ -x /bin/bash ]; then echo /bin/bash; \
 	  else echo sh; fi ; fi)
 
-GRAPHITE_FLAGS = -fgraphite -fgraphite-identity -floop-flatten -ftree-loop-linear -floop-interchange -floop-strip-mine -floop-block -Wno-error=maybe-uninitialized
-
 HOSTCC       = $(CCACHE) gcc
 HOSTCXX      = $(CCACHE) g++
 HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O3 -fomit-frame-pointer -fgcse-las
-HOSTCFLAGS   += $(GRAPHITE_FLAGS)
 HOSTCXXFLAGS = -O3 -fgcse-las
-HOSTCXXFLAGS += $(GRAPHITE_FLAGS)
 
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
@@ -337,9 +333,7 @@ include $(srctree)/scripts/Kbuild.include
 AS		= $(CROSS_COMPILE)as
 LD		= $(CROSS_COMPILE)ld
 CC		= $(CCACHE) $(CROSS_COMPILE)gcc
-CC		+= $(GRAPHITE_FLAGS)
 CPP		= $(CC) -E
-CPP		+= $(GRAPHITE_FLAGS)
 AR		= $(CROSS_COMPILE)ar
 NM		= $(CROSS_COMPILE)nm
 STRIP		= $(CROSS_COMPILE)strip
@@ -353,21 +347,15 @@ KALLSYMS	= scripts/kallsyms
 PERL		= perl
 CHECK		= sparse
 
-# Use the wrapper for the compiler.  This wrapper scans for new
-# warnings and causes the build to stop upon encountering them.
-# CC		= $(srctree)/scripts/gcc-wrapper.py $(REAL_CC)
-
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
 
-KERNELFLAGS	= -DNDEBUG -munaligned-access -fforce-addr -fsingle-precision-constant -mcpu=cortex-a15 -mtune=cortex-a15 -marm -mfpu=neon-vfpv4 -fgcse-las
+KERNELFLAGS	= -munaligned-access -fforce-addr -fsingle-precision-constant -mcpu=cortex-a15 -mtune=cortex-a15 -marm -mfpu=neon-vfpv4 -fgcse-las
 MODFLAGS	= -DMODULE $(KERNELFLAGS)
 CFLAGS_MODULE   = $(MODFLAGS)
-CFLAGS_MODULE   += $(GRAPHITE_FLAGS)
 AFLAGS_MODULE   = $(MODFLAGS)
 LDFLAGS_MODULE  = -T $(srctree)/scripts/module-common.lds
 CFLAGS_KERNEL	= $(KERNELFLAGS) -fpredictive-commoning
-CFLAGS_KERNEL   += $(GRAPHITE_FLAGS)
 AFLAGS_KERNEL	=
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
@@ -385,9 +373,10 @@ KBUILD_CFLAGS   := -Wall -DNDEBUG -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks
-
-KBUILD_CFLAGS   += $(GRAPHITE_FLAGS)
+		   -fno-delete-null-pointer-checks \
+		   -mcpu=cortex-a15 -mtune=cortex-a15 -mfpu=neon-vfpv4 -marm \
+		   -ffast-math -fsingle-precision-constant \
+		   -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr
 
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
@@ -1013,7 +1002,7 @@ prepare1: prepare2 include/linux/version.h include/generated/utsrelease.h \
 archprepare: archheaders archscripts prepare1 scripts_basic
 
 prepare0: archprepare FORCE
-	$(Q)$(MAKE) $(build)=. missing-syscalls
+	$(Q)$(MAKE) $(build)=.
 
 # All the preparing..
 prepare: prepare0
