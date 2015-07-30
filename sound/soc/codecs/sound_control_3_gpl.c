@@ -43,8 +43,8 @@ int taiko_write(struct snd_soc_codec *codec, unsigned int reg,
 #define REG_SZ	25
 
 #ifdef CONFIG_MACH_LGE
-static int cached_regs[] = {-1, -1, -1, -1, 0, 0, -1, -1, -1, -1,
-			1, -1, -1, -1, -1, -1, 3, 3, -1, -1,
+static int cached_regs[] = {-1, -1, -1, -1, 0, 0, 1, -1, -1, -1,
+			-1, -1, -1, -1, -1, -1, 3, 3, -1, -1,
 			-1, -1, -1, -1, -1};
 #else
 static int cached_regs[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -247,14 +247,14 @@ int snd_hax_reg_access(unsigned int reg)
 		/* Digital Headphones Gain */
 		case TAIKO_A_CDC_RX1_VOL_CTL_B2_CTL:
 		case TAIKO_A_CDC_RX2_VOL_CTL_B2_CTL:
-#ifndef CONFIG_MACH_LGE
+		/* Loud Speaker Gain */
 		case TAIKO_A_CDC_RX3_VOL_CTL_B2_CTL:
+#ifndef CONFIG_MACH_LGE
 		case TAIKO_A_CDC_RX4_VOL_CTL_B2_CTL:
 		case TAIKO_A_CDC_RX5_VOL_CTL_B2_CTL:
 		case TAIKO_A_CDC_RX6_VOL_CTL_B2_CTL:
-#endif
-		/* Loud Speaker Gain */
 		case TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL:
+#endif
 		/* Line out gain */
 		case TAIKO_A_RX_LINE_1_GAIN:
 		case TAIKO_A_RX_LINE_2_GAIN:
@@ -377,9 +377,9 @@ static ssize_t speaker_gain_show(struct kobject *kobj,
 {
         return sprintf(buf, "%u %u\n",
 			taiko_read(fauxsound_codec_ptr,
-				TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL),
+				TAIKO_A_CDC_RX3_VOL_CTL_B2_CTL),
 			taiko_read(fauxsound_codec_ptr,
-				TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL));
+				TAIKO_A_CDC_RX3_VOL_CTL_B2_CTL));
 
 }
 
@@ -396,9 +396,9 @@ static ssize_t speaker_gain_store(struct kobject *kobj,
 #endif
 		/* we have mono speaker! lval = rval */
 		taiko_write(fauxsound_codec_ptr,
-			TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL, lval);
+			TAIKO_A_CDC_RX3_VOL_CTL_B2_CTL, lval);
 		taiko_write(fauxsound_codec_ptr,
-			TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL, rval);
+			TAIKO_A_CDC_RX3_VOL_CTL_B2_CTL, rval);
 #ifdef CONFIG_MACH_LGE
 		lge_snd_ctrl_locked = 1;
 #endif
