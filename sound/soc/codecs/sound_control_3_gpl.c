@@ -1,8 +1,9 @@
 /*
- * Author: Paul Reioux aka Faux123 <reioux@gmail.com>
+ * Original Author: Paul Reioux aka Faux123 <reioux@gmail.com>
  *
  * WCD93xx sound control module
  * Copyright 2013 Paul Reioux
+ * Copyright 2015 Yuri Sh. (Dorimanx)
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -23,7 +24,11 @@
 #include <linux/mfd/wcd9xxx/wcd9320_registers.h>
 
 #define SOUND_CONTROL_MAJOR_VERSION	3
-#define SOUND_CONTROL_MINOR_VERSION	6
+#define SOUND_CONTROL_MINOR_VERSION	7
+
+#ifdef CONFIG_MACH_LGE
+static int lge_snd_ctrl_locked = 1;
+#endif
 
 extern struct snd_soc_codec *fauxsound_codec_ptr;
 extern int wcd9xxx_hw_revision;
@@ -36,103 +41,186 @@ int taiko_write(struct snd_soc_codec *codec, unsigned int reg,
 		unsigned int value);
 
 #define REG_SZ	25
-static unsigned int cached_regs[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			    0, 0, 0, 0, 0 };
 
-static unsigned int *cache_select(unsigned int reg)
-{
-	unsigned int *out = NULL;
-
-        switch (reg) {
-                case TAIKO_A_RX_HPH_L_GAIN:
-			out = &cached_regs[0];
-			break;
-                case TAIKO_A_RX_HPH_R_GAIN:
-			out = &cached_regs[1];
-			break;
-                case TAIKO_A_CDC_RX1_VOL_CTL_B2_CTL:
-			out = &cached_regs[4];
-			break;
-                case TAIKO_A_CDC_RX2_VOL_CTL_B2_CTL:
-			out = &cached_regs[5];
-			break;
-                case TAIKO_A_CDC_RX3_VOL_CTL_B2_CTL:
-			out = &cached_regs[6];
-			break;
-                case TAIKO_A_CDC_RX4_VOL_CTL_B2_CTL:
-			out = &cached_regs[7];
-			break;
-                case TAIKO_A_CDC_RX5_VOL_CTL_B2_CTL:
-			out = &cached_regs[8];
-			break;
-                case TAIKO_A_CDC_RX6_VOL_CTL_B2_CTL:
-			out = &cached_regs[9];
-			break;
-                case TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL:
-			out = &cached_regs[10];
-			break;
-                case TAIKO_A_CDC_TX1_VOL_CTL_GAIN:
-			out = &cached_regs[11];
-			break;
-                case TAIKO_A_CDC_TX2_VOL_CTL_GAIN:
-			out = &cached_regs[12];
-			break;
-                case TAIKO_A_CDC_TX3_VOL_CTL_GAIN:
-			out = &cached_regs[13];
-			break;
-                case TAIKO_A_CDC_TX4_VOL_CTL_GAIN:
-			out = &cached_regs[14];
-			break;
-                case TAIKO_A_CDC_TX5_VOL_CTL_GAIN:
-			out = &cached_regs[15];
-			break;
-                case TAIKO_A_CDC_TX6_VOL_CTL_GAIN:
-			out = &cached_regs[16];
-			break;
-                case TAIKO_A_CDC_TX7_VOL_CTL_GAIN:
-			out = &cached_regs[17];
-			break;
-                case TAIKO_A_CDC_TX8_VOL_CTL_GAIN:
-			out = &cached_regs[18];
-			break;
-                case TAIKO_A_CDC_TX9_VOL_CTL_GAIN:
-			out = &cached_regs[19];
-			break;
-                case TAIKO_A_CDC_TX10_VOL_CTL_GAIN:
-			out = &cached_regs[20];
-			break;
-		case TAIKO_A_RX_LINE_1_GAIN:
-			out = &cached_regs[21];
-			break;
-		case TAIKO_A_RX_LINE_2_GAIN:
-			out = &cached_regs[22];
-			break;
-		case TAIKO_A_RX_LINE_3_GAIN:
-			out = &cached_regs[23];
-			break;
-		case TAIKO_A_RX_LINE_4_GAIN:
-			out = &cached_regs[24];
-			break;
-        }
-	return out;
-}
+#ifdef CONFIG_MACH_LGE
+static int cached_regs[] = {-1, -1, -1, -1, 0, 0, -1, -1, -1, -1,
+			1, -1, -1, -1, -1, -1, 3, 3, -1, -1,
+			-1, -1, -1, -1, -1};
+#else
+static int cached_regs[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+			-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+			-1 -1, -1, -1, -1};
+#endif
 
 void snd_hax_cache_write(unsigned int reg, unsigned int value)
 {
-	unsigned int *tmp = cache_select(reg);
-
-	if (tmp != NULL)
-		*tmp = value;
+        switch (reg) {
+                case TAIKO_A_RX_HPH_L_GAIN:
+			cached_regs[0] = value;
+			break;
+                case TAIKO_A_RX_HPH_R_GAIN:
+			cached_regs[1] = value;
+			break;
+		case TAIKO_A_RX_HPH_L_STATUS:
+			cached_regs[2] = value;
+			break;
+		case TAIKO_A_RX_HPH_R_STATUS:
+			cached_regs[3] = value;
+			break;
+                case TAIKO_A_CDC_RX1_VOL_CTL_B2_CTL:
+			cached_regs[4] = value;
+			break;
+                case TAIKO_A_CDC_RX2_VOL_CTL_B2_CTL:
+			cached_regs[5] = value;
+			break;
+                case TAIKO_A_CDC_RX3_VOL_CTL_B2_CTL:
+			cached_regs[6] = value;
+			break;
+                case TAIKO_A_CDC_RX4_VOL_CTL_B2_CTL:
+			cached_regs[7] = value;
+			break;
+                case TAIKO_A_CDC_RX5_VOL_CTL_B2_CTL:
+			cached_regs[8] = value;
+			break;
+                case TAIKO_A_CDC_RX6_VOL_CTL_B2_CTL:
+			cached_regs[9] = value;
+			break;
+                case TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL:
+			cached_regs[10] = value;
+			break;
+                case TAIKO_A_CDC_TX1_VOL_CTL_GAIN:
+			cached_regs[11] = value;
+			break;
+                case TAIKO_A_CDC_TX2_VOL_CTL_GAIN:
+			cached_regs[12] = value;
+			break;
+                case TAIKO_A_CDC_TX3_VOL_CTL_GAIN:
+			cached_regs[13] = value;
+			break;
+                case TAIKO_A_CDC_TX4_VOL_CTL_GAIN:
+			cached_regs[14] = value;
+			break;
+                case TAIKO_A_CDC_TX5_VOL_CTL_GAIN:
+			cached_regs[15] = value;
+			break;
+                case TAIKO_A_CDC_TX6_VOL_CTL_GAIN:
+			cached_regs[16] = value;
+			break;
+                case TAIKO_A_CDC_TX7_VOL_CTL_GAIN:
+			cached_regs[17] = value;
+			break;
+                case TAIKO_A_CDC_TX8_VOL_CTL_GAIN:
+			cached_regs[18] = value;
+			break;
+                case TAIKO_A_CDC_TX9_VOL_CTL_GAIN:
+			cached_regs[19] = value;
+			break;
+                case TAIKO_A_CDC_TX10_VOL_CTL_GAIN:
+			cached_regs[20] = value;
+			break;
+		case TAIKO_A_RX_LINE_1_GAIN:
+			cached_regs[21] = value;
+			break;
+		case TAIKO_A_RX_LINE_2_GAIN:
+			cached_regs[22] = value;
+			break;
+		case TAIKO_A_RX_LINE_3_GAIN:
+			cached_regs[23] = value;
+			break;
+		case TAIKO_A_RX_LINE_4_GAIN:
+			cached_regs[24] = value;
+			break;
+		default:
+			break;
+        }
+	return;
 }
 EXPORT_SYMBOL(snd_hax_cache_write);
 
-unsigned int snd_hax_cache_read(unsigned int reg)
+int snd_hax_cache_read(unsigned int reg)
 {
-	if (cache_select(reg) != NULL)
-		return *cache_select(reg);
-	else
-		return -1;
+	int out = -1;
+
+	switch (reg) {
+		case TAIKO_A_RX_HPH_L_GAIN:
+			out = cached_regs[0];
+			break;
+		case TAIKO_A_RX_HPH_R_GAIN:
+			out = cached_regs[1];
+			break;
+		case TAIKO_A_RX_HPH_L_STATUS:
+			out = cached_regs[2];
+			break;
+		case TAIKO_A_RX_HPH_R_STATUS:
+			out = cached_regs[3];
+			break;
+		case TAIKO_A_CDC_RX1_VOL_CTL_B2_CTL:
+			out = cached_regs[4];
+			break;
+		case TAIKO_A_CDC_RX2_VOL_CTL_B2_CTL:
+			out = cached_regs[5];
+			break;
+		case TAIKO_A_CDC_RX3_VOL_CTL_B2_CTL:
+			out = cached_regs[6];
+			break;
+		case TAIKO_A_CDC_RX4_VOL_CTL_B2_CTL:
+			out = cached_regs[7];
+			break;
+		case TAIKO_A_CDC_RX5_VOL_CTL_B2_CTL:
+			out = cached_regs[8];
+			break;
+		case TAIKO_A_CDC_RX6_VOL_CTL_B2_CTL:
+			out = cached_regs[9];
+			break;
+		case TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL:
+			out = cached_regs[10];
+			break;
+		case TAIKO_A_CDC_TX1_VOL_CTL_GAIN:
+			out = cached_regs[11];
+			break;
+		case TAIKO_A_CDC_TX2_VOL_CTL_GAIN:
+			out = cached_regs[12];
+			break;
+		case TAIKO_A_CDC_TX3_VOL_CTL_GAIN:
+			out = cached_regs[13];
+			break;
+		case TAIKO_A_CDC_TX4_VOL_CTL_GAIN:
+			out = cached_regs[14];
+			break;
+		case TAIKO_A_CDC_TX5_VOL_CTL_GAIN:
+			out = cached_regs[15];
+			break;
+		case TAIKO_A_CDC_TX6_VOL_CTL_GAIN:
+			out = cached_regs[16];
+			break;
+		case TAIKO_A_CDC_TX7_VOL_CTL_GAIN:
+			out = cached_regs[17];
+			break;
+		case TAIKO_A_CDC_TX8_VOL_CTL_GAIN:
+			out = cached_regs[18];
+			break;
+		case TAIKO_A_CDC_TX9_VOL_CTL_GAIN:
+			out = cached_regs[19];
+			break;
+		case TAIKO_A_CDC_TX10_VOL_CTL_GAIN:
+			out = cached_regs[20];
+			break;
+		case TAIKO_A_RX_LINE_1_GAIN:
+			out = cached_regs[21];
+			break;
+		case TAIKO_A_RX_LINE_2_GAIN:
+			out = cached_regs[22];
+			break;
+		case TAIKO_A_RX_LINE_3_GAIN:
+			out = cached_regs[23];
+			break;
+		case TAIKO_A_RX_LINE_4_GAIN:
+			out = cached_regs[24];
+			break;
+		default:
+			break;
+        }
+	return out;
 }
 EXPORT_SYMBOL(snd_hax_cache_read);
 
@@ -141,39 +229,68 @@ int snd_hax_reg_access(unsigned int reg)
 	int ret = 1;
 
 	switch (reg) {
+#if 0 /* LP sound driver do not work with PA high/low */
+		/* Analog Power Amp (PA) */
 		case TAIKO_A_RX_HPH_L_GAIN:
 		case TAIKO_A_RX_HPH_R_GAIN:
 		case TAIKO_A_RX_HPH_L_STATUS:
 		case TAIKO_A_RX_HPH_R_STATUS:
-			if (snd_ctrl_locked > 1)
+#endif
+#ifdef CONFIG_MACH_LGE
+			if (lge_snd_ctrl_locked > 0)
 				ret = 0;
+#else
+			if (snd_ctrl_locked > 0)
+				ret = 0;
+#endif
 			break;
+		/* Digital Headphones Gain */
 		case TAIKO_A_CDC_RX1_VOL_CTL_B2_CTL:
 		case TAIKO_A_CDC_RX2_VOL_CTL_B2_CTL:
+#ifndef CONFIG_MACH_LGE
 		case TAIKO_A_CDC_RX3_VOL_CTL_B2_CTL:
 		case TAIKO_A_CDC_RX4_VOL_CTL_B2_CTL:
 		case TAIKO_A_CDC_RX5_VOL_CTL_B2_CTL:
 		case TAIKO_A_CDC_RX6_VOL_CTL_B2_CTL:
+#endif
+		/* Loud Speaker Gain */
 		case TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL:
+		/* Line out gain */
 		case TAIKO_A_RX_LINE_1_GAIN:
 		case TAIKO_A_RX_LINE_2_GAIN:
 		case TAIKO_A_RX_LINE_3_GAIN:
 		case TAIKO_A_RX_LINE_4_GAIN:
+#ifdef CONFIG_MACH_LGE
+			if (lge_snd_ctrl_locked > 0)
+				ret = 0;
+#else
 			if (snd_ctrl_locked > 0)
 				ret = 0;
+#endif
 			break;
+#ifndef CONFIG_MACH_LGE
 		case TAIKO_A_CDC_TX1_VOL_CTL_GAIN:
 		case TAIKO_A_CDC_TX2_VOL_CTL_GAIN:
 		case TAIKO_A_CDC_TX3_VOL_CTL_GAIN:
 		case TAIKO_A_CDC_TX4_VOL_CTL_GAIN:
 		case TAIKO_A_CDC_TX5_VOL_CTL_GAIN:
+#endif
+		/* Incall MIC Gain */
 		case TAIKO_A_CDC_TX6_VOL_CTL_GAIN:
+		/* Camera MIC Gain */
 		case TAIKO_A_CDC_TX7_VOL_CTL_GAIN:
+#ifndef CONFIG_MACH_LGE
 		case TAIKO_A_CDC_TX8_VOL_CTL_GAIN:
 		case TAIKO_A_CDC_TX9_VOL_CTL_GAIN:
 		case TAIKO_A_CDC_TX10_VOL_CTL_GAIN:
+#endif
+#ifdef CONFIG_MACH_LGE
+			if (lge_snd_ctrl_locked > 0)
+				ret = 0;
+#else
 			if (snd_rec_ctrl_locked > 0)
 				ret = 0;
+#endif
 			break;
 		default:
 			break;
@@ -200,7 +317,7 @@ static ssize_t cam_mic_gain_show(struct kobject *kobj,
 {
         return sprintf(buf, "%u\n",
 		taiko_read(fauxsound_codec_ptr,
-			TAIKO_A_CDC_TX6_VOL_CTL_GAIN));
+			TAIKO_A_CDC_TX7_VOL_CTL_GAIN));
 
 }
 
@@ -212,9 +329,16 @@ static ssize_t cam_mic_gain_store(struct kobject *kobj,
 	sscanf(buf, "%u %u", &lval, &chksum);
 
 	if (calc_checksum(lval, 0, chksum)) {
+#ifdef CONFIG_MACH_LGE
+		lge_snd_ctrl_locked = 0;
+#endif
 		taiko_write(fauxsound_codec_ptr,
-			TAIKO_A_CDC_TX6_VOL_CTL_GAIN, lval);
+			TAIKO_A_CDC_TX7_VOL_CTL_GAIN, lval);
+#ifdef CONFIG_MACH_LGE
+		lge_snd_ctrl_locked = 1;
+#endif
 	}
+
 	return count;
 }
 
@@ -223,7 +347,7 @@ static ssize_t mic_gain_show(struct kobject *kobj,
 {
 	return sprintf(buf, "%u\n",
 		taiko_read(fauxsound_codec_ptr,
-			TAIKO_A_CDC_TX7_VOL_CTL_GAIN));
+			TAIKO_A_CDC_TX6_VOL_CTL_GAIN));
 }
 
 static ssize_t mic_gain_store(struct kobject *kobj,
@@ -234,9 +358,16 @@ static ssize_t mic_gain_store(struct kobject *kobj,
 	sscanf(buf, "%u %u", &lval, &chksum);
 
 	if (calc_checksum(lval, 0, chksum)) {
+#ifdef CONFIG_MACH_LGE
+		lge_snd_ctrl_locked = 0;
+#endif
 		taiko_write(fauxsound_codec_ptr,
-			TAIKO_A_CDC_TX7_VOL_CTL_GAIN, lval);
+			TAIKO_A_CDC_TX6_VOL_CTL_GAIN, lval);
+#ifdef CONFIG_MACH_LGE
+		lge_snd_ctrl_locked = 1;
+#endif
 	}
+
 	return count;
 
 }
@@ -244,23 +375,12 @@ static ssize_t mic_gain_store(struct kobject *kobj,
 static ssize_t speaker_gain_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
-#ifndef CONFIG_MACH_LGE
         return sprintf(buf, "%u %u\n",
 			taiko_read(fauxsound_codec_ptr,
-				TAIKO_A_CDC_RX3_VOL_CTL_B2_CTL),
+				TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL),
 			taiko_read(fauxsound_codec_ptr,
-				TAIKO_A_CDC_RX4_VOL_CTL_B2_CTL));
-#else
-		unsigned int retl, retr;
+				TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL));
 
-		retl = taiko_read(fauxsound_codec_ptr,
-			TAIKO_A_CDC_RX3_VOL_CTL_B2_CTL);
-		retr = taiko_read(fauxsound_codec_ptr,
-			TAIKO_A_CDC_RX4_VOL_CTL_B2_CTL);
-
-		return sprintf(buf, "%u %u\n",
-			retl == 24 ? 0 : retl, retr == 24 ? 0 : retr);
-#endif
 }
 
 static ssize_t speaker_gain_store(struct kobject *kobj,
@@ -271,11 +391,19 @@ static ssize_t speaker_gain_store(struct kobject *kobj,
 	sscanf(buf, "%u %u %u", &lval, &rval, &chksum);
 
 	if (calc_checksum(lval, rval, chksum)) {
+#ifdef CONFIG_MACH_LGE
+		lge_snd_ctrl_locked = 0;
+#endif
+		/* we have mono speaker! lval = rval */
 		taiko_write(fauxsound_codec_ptr,
-			TAIKO_A_CDC_RX3_VOL_CTL_B2_CTL, lval);
+			TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL, lval);
 		taiko_write(fauxsound_codec_ptr,
-			TAIKO_A_CDC_RX4_VOL_CTL_B2_CTL, rval);
+			TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL, rval);
+#ifdef CONFIG_MACH_LGE
+		lge_snd_ctrl_locked = 1;
+#endif
 	}
+
 	return count;
 }
 
@@ -297,10 +425,16 @@ static ssize_t headphone_gain_store(struct kobject *kobj,
 	sscanf(buf, "%u %u %u", &lval, &rval, &chksum);
 
 	if (calc_checksum(lval, rval, chksum)) {
+#ifdef CONFIG_MACH_LGE
+		lge_snd_ctrl_locked = 0;
+#endif
 		taiko_write(fauxsound_codec_ptr,
 			TAIKO_A_CDC_RX1_VOL_CTL_B2_CTL, lval);
 		taiko_write(fauxsound_codec_ptr,
 			TAIKO_A_CDC_RX2_VOL_CTL_B2_CTL, rval);
+#ifdef CONFIG_MACH_LGE
+		lge_snd_ctrl_locked = 1;
+#endif
 	}
 	return count;
 }
@@ -323,37 +457,37 @@ static ssize_t headphone_pa_gain_store(struct kobject *kobj,
 	sscanf(buf, "%u %u %u", &lval, &rval, &chksum);
 
 	if (calc_checksum(lval, rval, chksum)) {
-	gain = taiko_read(fauxsound_codec_ptr, TAIKO_A_RX_HPH_L_GAIN);
-	out = (gain & 0xf0) | lval;
-	taiko_write(fauxsound_codec_ptr, TAIKO_A_RX_HPH_L_GAIN, out);
+#ifdef CONFIG_MACH_LGE
+		lge_snd_ctrl_locked = 0;
+#endif
+		gain = taiko_read(fauxsound_codec_ptr, TAIKO_A_RX_HPH_L_GAIN);
+		out = (gain & 0xf0) | lval;
+		taiko_write(fauxsound_codec_ptr, TAIKO_A_RX_HPH_L_GAIN, out);
 
-	status = taiko_read(fauxsound_codec_ptr, TAIKO_A_RX_HPH_L_STATUS);
-	out = (status & 0x0f) | (lval << 4);
-	taiko_write(fauxsound_codec_ptr, TAIKO_A_RX_HPH_L_STATUS, out);
+		status = taiko_read(fauxsound_codec_ptr,
+				TAIKO_A_RX_HPH_L_STATUS);
+		out = (status & 0x0f) | (lval << 4);
+		taiko_write(fauxsound_codec_ptr, TAIKO_A_RX_HPH_L_STATUS, out);
 
-	gain = taiko_read(fauxsound_codec_ptr, TAIKO_A_RX_HPH_R_GAIN);
-	out = (gain & 0xf0) | rval;
-	taiko_write(fauxsound_codec_ptr, TAIKO_A_RX_HPH_R_GAIN, out);
+		gain = taiko_read(fauxsound_codec_ptr, TAIKO_A_RX_HPH_R_GAIN);
+		out = (gain & 0xf0) | rval;
+		taiko_write(fauxsound_codec_ptr, TAIKO_A_RX_HPH_R_GAIN, out);
 
-	status = taiko_read(fauxsound_codec_ptr, TAIKO_A_RX_HPH_R_STATUS);
-	out = (status & 0x0f) | (rval << 4);
-	taiko_write(fauxsound_codec_ptr, TAIKO_A_RX_HPH_R_STATUS, out);
+		status = taiko_read(fauxsound_codec_ptr,
+				TAIKO_A_RX_HPH_R_STATUS);
+		out = (status & 0x0f) | (rval << 4);
+		taiko_write(fauxsound_codec_ptr, TAIKO_A_RX_HPH_R_STATUS, out);
+#ifdef CONFIG_MACH_LGE
+		lge_snd_ctrl_locked = 1;
+#endif
 	}
 	return count;
 }
 
 static unsigned int selected_reg = 0xdeadbeef;
 
-static ssize_t sound_reg_select_store(struct kobject *kobj,
-                struct kobj_attribute *attr, const char *buf, size_t count)
-{
-        sscanf(buf, "%u", &selected_reg);
-
-	return count;
-}
-
 static ssize_t sound_reg_read_show(struct kobject *kobj,
-                struct kobj_attribute *attr, char *buf)
+		struct kobj_attribute *attr, char *buf)
 {
 	if (selected_reg == 0xdeadbeef)
 		return -1;
@@ -362,12 +496,21 @@ static ssize_t sound_reg_read_show(struct kobject *kobj,
 			taiko_read(fauxsound_codec_ptr, selected_reg));
 }
 
+static ssize_t sound_reg_select_store(struct kobject *kobj,
+                struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	sscanf(buf, "%u", &selected_reg);
+
+	return count;
+}
+
 static ssize_t sound_reg_write_store(struct kobject *kobj,
                 struct kobj_attribute *attr, const char *buf, size_t count)
 {
-        unsigned int out, chksum;
+	unsigned int out, chksum;
 
 	sscanf(buf, "%u %u", &out, &chksum);
+
 	if (calc_checksum(out, 0, chksum)) {
 		if (selected_reg != 0xdeadbeef)
 			taiko_write(fauxsound_codec_ptr, selected_reg, out);
@@ -389,6 +532,12 @@ static ssize_t sound_control_version_show(struct kobject *kobj,
 			SOUND_CONTROL_MINOR_VERSION);
 }
 
+static ssize_t sound_control_locked_show(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
+{
+        return sprintf(buf, "%d\n", snd_ctrl_locked);
+}
+
 static ssize_t sound_control_locked_store(struct kobject *kobj,
                 struct kobj_attribute *attr, const char *buf, size_t count)
 {
@@ -401,10 +550,10 @@ static ssize_t sound_control_locked_store(struct kobject *kobj,
 	return count;
 }
 
-static ssize_t sound_control_locked_show(struct kobject *kobj,
+static ssize_t sound_control_rec_locked_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
-        return sprintf(buf, "%d\n", snd_ctrl_locked);
+        return sprintf(buf, "%d\n", snd_rec_ctrl_locked);
 }
 
 static ssize_t sound_control_rec_locked_store(struct kobject *kobj,
@@ -417,12 +566,6 @@ static ssize_t sound_control_rec_locked_store(struct kobject *kobj,
 	snd_rec_ctrl_locked = inp;
 
 	return count;
-}
-
-static ssize_t sound_control_rec_locked_show(struct kobject *kobj,
-		struct kobj_attribute *attr, char *buf)
-{
-        return sprintf(buf, "%d\n", snd_rec_ctrl_locked);
 }
 
 static struct kobj_attribute sound_reg_sel_attribute =
@@ -439,7 +582,7 @@ static struct kobj_attribute sound_reg_read_attribute =
 
 static struct kobj_attribute sound_reg_write_attribute =
 	__ATTR(sound_reg_write,
-		0222,
+		0666,
 		NULL,
 		sound_reg_write_store);
 
@@ -551,6 +694,6 @@ static void sound_control_exit(void)
 module_init(sound_control_init);
 module_exit(sound_control_exit);
 MODULE_LICENSE("GPL and additional rights");
-MODULE_AUTHOR("Paul Reioux <reioux@gmail.com>");
+MODULE_AUTHOR("Paul Reioux <reioux@gmail.com>, \
+				Yuri Sh. <yuri@bynet.co.il>");
 MODULE_DESCRIPTION("Sound Control Module 3.x");
-
