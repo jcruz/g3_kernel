@@ -362,7 +362,7 @@ static ssize_t anx7816_write_reg_store(struct device *dev, struct device_attribu
 	char op, i;
 	char r[3];
 	char v[3];
-	unchar tmp;
+	unchar tmp = 0;
 	int id, reg, val = 0 ;
 
 	if (sp_tx_cur_states() != STATE_PLAY_BACK) {
