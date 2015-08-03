@@ -1288,7 +1288,7 @@ exit:
 	return ret;
 }
 
-static void __ref do_freq_control(long temp)
+static void do_freq_control(long temp)
 {
 	uint32_t cpu = 0;
 	uint32_t max_freq = cpus[cpu].limited_max_freq;
