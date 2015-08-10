@@ -108,15 +108,6 @@ config VIBRATOR_PM8941_HAPTIC
 	help
 	  This option enables support for the vibrator power control.
 
-config ANDROID_BG_SCAN_MEM
-	bool "SCAN free memory more frequently"
-	depends on ANDROID_LOW_MEMORY_KILLER && ANDROID_LMK_ADJ_RBTREE && CGROUP_SCHED
-	default N
-	---help---
-	  Add more free-memory check point. Such as, when a task is moved to
-	  background task groups, we can trigger low memory killer to scan
-	  memory and decide whether it needs to reclaim memory by killing tasks.
-
 endif # if ANDROID
 
 endmenu
