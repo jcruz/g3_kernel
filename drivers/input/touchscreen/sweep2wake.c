@@ -41,8 +41,9 @@
 /* Credits:
  * v1.5 Modded for G3 by 777jon
  * v1.6 Switch to POWERSUSPEND instead of LCD_NOTIFY + cleanups
+ * v1.7 Change sysfs interface to sweep2sleep only
  */
-#define DRIVER_VERSION "1.6"
+#define DRIVER_VERSION "1.7"
 #define LOGTAG "[sweep2wake]: "
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
@@ -401,7 +402,7 @@ static int lcd_notifier_callback(struct notifier_block *this,
 /*
  * SYSFS stuff below here
  */
-static ssize_t s2w_sweep2wake_show(struct device *dev,
+static ssize_t s2w_sweep2sleep_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
 	size_t count = 0;
@@ -411,7 +412,7 @@ static ssize_t s2w_sweep2wake_show(struct device *dev,
 	return count;
 }
 
-static ssize_t s2w_sweep2wake_dump(struct device *dev,
+static ssize_t s2w_sweep2sleep_dump(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
 	if (buf[0] >= '0' && buf[0] <= '2' && buf[1] == '\n')
@@ -421,10 +422,10 @@ static ssize_t s2w_sweep2wake_dump(struct device *dev,
 	return count;
 }
 
-static DEVICE_ATTR(sweep2wake, (S_IWUSR|S_IRUGO),
-	s2w_sweep2wake_show, s2w_sweep2wake_dump);
+static DEVICE_ATTR(sweep2sleep, (S_IWUSR|S_IRUGO),
+	s2w_sweep2sleep_show, s2w_sweep2sleep_dump);
 
-static ssize_t s2w_version_show(struct device *dev,
+static ssize_t s2s_version_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
 	size_t count = 0;
@@ -434,14 +435,14 @@ static ssize_t s2w_version_show(struct device *dev,
 	return count;
 }
 
-static ssize_t s2w_version_dump(struct device *dev,
+static ssize_t s2s_version_dump(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
 	return count;
 }
 
-static DEVICE_ATTR(sweep2wake_version, (S_IWUSR|S_IRUGO),
-	s2w_version_show, s2w_version_dump);
+static DEVICE_ATTR(sweep2sleep_version, (S_IWUSR|S_IRUGO),
+	s2s_version_show, s2s_version_dump);
 
 /*
  * INIT / EXIT stuff below here
@@ -491,13 +492,13 @@ static int __init sweep2wake_init(void)
 	if (android_touch_kobj == NULL) {
 		pr_warn("%s: android_touch_kobj create_and_add failed\n", __func__);
 	}
-	rc = sysfs_create_file(android_touch_kobj, &dev_attr_sweep2wake.attr);
+	rc = sysfs_create_file(android_touch_kobj, &dev_attr_sweep2sleep.attr);
 	if (rc) {
 		pr_warn("%s: sysfs_create_file failed for sweep2wake\n", __func__);
 	}
-	rc = sysfs_create_file(android_touch_kobj, &dev_attr_sweep2wake_version.attr);
+	rc = sysfs_create_file(android_touch_kobj, &dev_attr_sweep2sleep_version.attr);
 	if (rc) {
-		pr_warn("%s: sysfs_create_file failed for sweep2wake_version\n", __func__);
+		pr_warn("%s: sysfs_create_file failed for sweep2sleep_version\n", __func__);
 	}
 
 err_input_dev:
