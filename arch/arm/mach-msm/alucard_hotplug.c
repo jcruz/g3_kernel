@@ -86,7 +86,7 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 	unsigned int cpu = 0;
 	unsigned int rq_avg = 0;
 	bool rq_avg_calc = true;
-	int online_cpus;
+	int online_cpus, delay;
 	cpumask_var_t cpus;
 
 	if (hotplug_tuners_ins.suspended) {
@@ -227,10 +227,14 @@ static void __ref hotplug_work_fn(struct work_struct *work)
 		hotplug_tuners_ins.force_cpu_up = false;
 	}
 
+	delay = msecs_to_jiffies(hotplug_tuners_ins.hotplug_sampling_rate);
+	if (num_online_cpus() > 1) {
+		delay -= jiffies % delay;
+	}
+
 	queue_delayed_work_on(BOOT_CPU, system_wq,
 				&alucard_hotplug_work,
-				msecs_to_jiffies(
-				hotplug_tuners_ins.hotplug_sampling_rate));
+				delay);
 }
 
 #ifdef CONFIG_POWERSUSPEND
@@ -317,6 +321,9 @@ static int alucard_hotplug_callback(struct notifier_block *nb,
 	case CPU_STARTING:
 		pcpu_info = &per_cpu(od_hotplug_cpuinfo, cpu);
 		pcpu_info->cur_up_rate = 1;
+		break;
+	case CPU_DYING:
+		pcpu_info = &per_cpu(od_hotplug_cpuinfo, cpu);
 		pcpu_info->cur_down_rate = 1;
 		break;
 	}
@@ -332,6 +339,7 @@ static struct notifier_block alucard_hotplug_nb =
 static void hotplug_start(void)
 {
 	unsigned int cpu;
+	int delay;
 
 	hotplug_tuners_ins.suspended = false;
 	hotplug_tuners_ins.force_cpu_up = false;
@@ -350,11 +358,14 @@ static void hotplug_start(void)
 	}
 	put_online_cpus();
 
+	delay = msecs_to_jiffies(hotplug_tuners_ins.hotplug_sampling_rate);
+	if (num_online_cpus() > 1) {
+		delay -= jiffies % delay;
+	}
 	INIT_DELAYED_WORK_DEFERRABLE(&alucard_hotplug_work, hotplug_work_fn);
 	queue_delayed_work_on(BOOT_CPU, system_wq,
 				&alucard_hotplug_work,
-				msecs_to_jiffies(
-				hotplug_tuners_ins.hotplug_sampling_rate));
+				delay);
 
 #ifdef CONFIG_POWERSUSPEND
 	register_power_suspend(&alucard_hotplug_power_suspend_driver);
