@@ -1132,4 +1132,11 @@ config TOUCHSCREEN_PREVENT_SLEEP
         help
           This disables the sleep function of modified touchscreen drivers.
 
+config ALUCARD_TOUCHSCREEN_BOOST
+	tristate "Touchscreen boost"
+	depends on MSM_LIMITER
+	default y
+	help
+	  Alucard touchscreen boost.
+
 endif
